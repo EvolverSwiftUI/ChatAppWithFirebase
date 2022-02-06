@@ -9,6 +9,8 @@ import SwiftUI
 
 struct LoginView: View {
     
+    let didCompletedSignInProcess: (() -> Void)
+    
     @State private var isLogInMode  : Bool    = false
     @State private var email        : String  = ""
     @State private var password     : String  = ""
@@ -117,10 +119,17 @@ struct LoginView: View {
             }
             debugPrint("Success: ", result?.user.uid ?? "")
             self.loginStatusMessage = "Success: \(result?.user.uid ?? "")"
+            self.didCompletedSignInProcess()
         }
     }
         
     private func createNewAccount() {
+        
+        if self.image == nil  {
+            self.loginStatusMessage = "You must select an avatar image"
+            return
+        }
+        
         FirebaseManager.shared.auth.createUser(withEmail: email, password: password) { (result, error) in
             if let error = error {
                 debugPrint("Error: \(error.localizedDescription)")
@@ -186,12 +195,15 @@ struct LoginView: View {
                 }
                 
                 self.loginStatusMessage = "Success at DB"
+                self.didCompletedSignInProcess()
             }
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView()
+        LoginView(didCompletedSignInProcess: {
+            
+        })
     }
 }
