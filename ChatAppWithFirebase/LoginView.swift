@@ -6,24 +6,6 @@
 //
 
 import SwiftUI
-import Firebase
-
-class FirebaseManager: NSObject {
-    
-    let auth: Auth
-    let storage: Storage
-    
-    static let shared = FirebaseManager()
-    
-    override init() {
-        FirebaseApp.configure()
-        
-        self.auth = Auth.auth()
-        self.storage = Storage.storage()
-        
-        super.init()
-    }
-}
 
 struct LoginView: View {
     
@@ -176,10 +158,35 @@ struct LoginView: View {
                 }
                 
                 self.loginStatusMessage = "Success image store: \(url?.absoluteString ?? "")"
+                
+                guard let url = url else { return }
+                self.storeUserInformation(profileImageUrl: url)
             }
             
-            
         }
+    }
+    
+    private func storeUserInformation(profileImageUrl: URL) {
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else {
+            return
+        }
+
+        let userData =
+            [
+                "email"             : self.email,
+                "userId"            : uid,
+                "profileImageUrl"   : profileImageUrl.absoluteString
+            ]
+        
+        FirebaseManager.shared.firestore.collection("users")
+            .document(uid).setData(userData) { error in
+                if let err = error {
+                    self.loginStatusMessage = "Failed at DB: \(err.localizedDescription)"
+                    return
+                }
+                
+                self.loginStatusMessage = "Success at DB"
+            }
     }
 }
 
